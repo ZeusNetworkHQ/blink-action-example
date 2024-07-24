@@ -62,7 +62,7 @@ import {
       const connection = new Connection(clusterApiUrl('mainnet-beta'),{
         commitment: "confirmed",
       });
-      const mainWalletPrivateKey = bs58.decode(process.env['MAIN_WALLET_PRIVATE_KEY']);
+      const mainWalletPrivateKey = bs58.decode(process.env['MAIN_WALLET_PRIVATE_KEY'] ?? '');
       const mainWallet = Keypair.fromSecretKey(
         new Uint8Array(mainWalletPrivateKey)
       );
