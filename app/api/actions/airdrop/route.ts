@@ -2,24 +2,24 @@ import {
     ActionPostResponse,
     ACTIONS_CORS_HEADERS,
     createPostResponse,
-    MEMO_PROGRAM_ID,
     ActionGetResponse,
     ActionPostRequest,
   } from "@solana/actions";
   import {
     clusterApiUrl,
-    ComputeBudgetProgram,
     Connection,
     PublicKey,
     Transaction,
-    TransactionInstruction,
+    Keypair,
   } from "@solana/web3.js";
+  import { getAssociatedTokenAddress, createTransferInstruction, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+  import bs58 from "bs58";
 
   export const GET = async (req: Request) => {
     const payload: ActionGetResponse = {
       title: "ZEUS Airdrop",
       icon: new URL(
-        "/public/zeus_network_logo.png",
+        "/zeus_network_logo.png",
         new URL(req.url).origin
       ).toString(),
       description:
@@ -44,9 +44,10 @@ import {
   export const OPTIONS = GET;
 
   export const POST = async (req: Request) => {
+    const zuesTokenMint = new PublicKey("ZEUS1aR7aX8DFFJf5QjWj2ftDDdNTroMNGo8YoQm3Gq");
+
     try {
       const body: ActionPostRequest = await req.json();
-  
       // Validate to confirm the user publickey received is valid before use
       let account: PublicKey;
       try {
@@ -57,7 +58,47 @@ import {
           headers: ACTIONS_CORS_HEADERS, //Must include CORS HEADERS
         });
       }
-      const transaction = new Transaction()
+
+      const connection = new Connection(clusterApiUrl('mainnet-beta'),{
+        commitment: "confirmed",
+      });
+      const mainWalletPrivateKey = bs58.decode(process.env['MAIN_WALLET_PRIVATE_KEY']);
+      const mainWallet = Keypair.fromSecretKey(
+        new Uint8Array(mainWalletPrivateKey)
+      );
+    
+      // Get the token account of the main wallet
+      const fromTokenAccount = await getAssociatedTokenAddress(
+        zuesTokenMint,
+        mainWallet.publicKey
+      );
+    
+      let toTokenAccount;
+      // Get the token account of the customer wallet
+      toTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        mainWallet,
+        zuesTokenMint,
+        account
+      );
+      console.log('Receiver token account:', toTokenAccount.address.toBase58());
+    
+      // Create the transfer instruction
+      const transferInstruction = createTransferInstruction(
+        fromTokenAccount,
+        toTokenAccount.address,
+        mainWallet.publicKey,
+        1
+      );
+    
+      // Create a transaction and add the transfer instruction
+      const transaction = new Transaction().add(transferInstruction);
+    
+      // Set the recent blockhash and fee payer
+      transaction.recentBlockhash = (
+        await connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.feePayer = mainWallet.publicKey;
   
       const payload: ActionPostResponse = await createPostResponse({
         fields: {
