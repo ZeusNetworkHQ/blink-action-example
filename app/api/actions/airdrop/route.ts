@@ -12,7 +12,12 @@ import {
     Transaction,
     Keypair,
   } from "@solana/web3.js";
-  import { getAssociatedTokenAddress, createTransferInstruction, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+  import { 
+    getAssociatedTokenAddress, 
+    createTransferInstruction, 
+    getOrCreateAssociatedTokenAccount,
+    createAssociatedTokenAccountInstruction,
+} from "@solana/spl-token";
   import bs58 from "bs58";
 
   export const GET = async (req: Request) => {
@@ -73,22 +78,20 @@ import {
         mainWallet.publicKey
       );
     
-      let toTokenAccount;
-      // Get the token account of the customer wallet
-      toTokenAccount = await getOrCreateAssociatedTokenAccount(
-        connection,
-        mainWallet,
-        zuesTokenMint,
-        account
-      );
-      console.log('Receiver token account:', toTokenAccount.address.toBase58());
+      // check if the token account exists, if not create it
+      let toTokenAccount = await getOrCreateAssociatedTokenAccount(
+            connection,
+            mainWallet,
+            zuesTokenMint,
+            mainWallet.publicKey
+        );
     
       // Create the transfer instruction
       const transferInstruction = createTransferInstruction(
         fromTokenAccount,
         toTokenAccount.address,
         mainWallet.publicKey,
-        1
+        1000000
       );
     
       // Create a transaction and add the transfer instruction
@@ -103,10 +106,8 @@ import {
       const payload: ActionPostResponse = await createPostResponse({
         fields: {
           transaction,
-          message: "Post this memo on-chain",
+          message: "Successfully claimed!",
         },
-        // no additional signers are required for this transaction
-        // signers: [],
       });
   
       return Response.json(payload, {
