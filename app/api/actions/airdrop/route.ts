@@ -41,8 +41,15 @@ export const GET = async (req: Request) => {
       actions: [
         {
           label: "Claim",
-          href: "/api/actions/airdrop",
+          href: "/api/actions/airdrop?password={password}",
+          parameters: [
+            {
+              name: "password",
+              label: "Password",
+            },
+          ],
         }
+
       ]
     }
   };
@@ -56,7 +63,6 @@ export const OPTIONS = GET;
 
 export const POST = async (req: Request) => {
   // const zeusTokenMint = new PublicKey("ZEUS1aR7aX8DFFJf5QjWj2ftDDdNTroMNGo8YoQm3Gq");
-
   const zeusTokenMint = new PublicKey("BXHy8beuq5D8RpnXpywY21iXB4PaspTUG6TYrRY7LbK2");
   try {
     const body: ActionPostRequest = await req.json();
@@ -83,7 +89,14 @@ export const POST = async (req: Request) => {
       zeusTokenMint,
       account
     );
-    const escrow = new PublicKey("Fj1Wo7tqyYH9b9Q6ULvvktCKEPwxVUrtUyUDedTm2sfq");
+    // Determined Escrow and Vault addresses
+    const params = new URL(req.url).searchParams;
+    const password = params.get("password");
+    const seed = new anchor.BN(password);
+    const escrow = PublicKey.findProgramAddressSync(
+      [Buffer.from("state"), seed.toArrayLike(Buffer, "le", 8)],
+      program.programId
+    )[0];
     const vault = await getAssociatedTokenAddress(
       zeusTokenMint,
       escrow,
