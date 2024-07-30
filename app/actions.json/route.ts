@@ -29,3 +29,5 @@ export const GET = async () => {
 // DO NOT FORGET TO INCLUDE THE `OPTIONS` HTTP METHOD
 // THIS WILL ENSURE CORS WORKS FOR BLINKS
 export const OPTIONS = GET;
+
+export const runtime = 'edge' // 'nodejs' (default) | 'edge'
