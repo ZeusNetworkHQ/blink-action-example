@@ -62,8 +62,8 @@ export const GET = async (req: Request) => {
 export const OPTIONS = GET;
 
 export const POST = async (req: Request) => {
-  // const zeusTokenMint = new PublicKey("ZEUS1aR7aX8DFFJf5QjWj2ftDDdNTroMNGo8YoQm3Gq");
-  const zeusTokenMint = new PublicKey("BXHy8beuq5D8RpnXpywY21iXB4PaspTUG6TYrRY7LbK2");
+  const zeusTokenMint = new PublicKey("ZEUS1aR7aX8DFFJf5QjWj2ftDDdNTroMNGo8YoQm3Gq");
+  // const zeusTokenMint = new PublicKey("BXHy8beuq5D8RpnXpywY21iXB4PaspTUG6TYrRY7LbK2");
   try {
     const body: ActionPostRequest = await req.json();
     // Validate to confirm the user publickey received is valid before use
@@ -77,12 +77,12 @@ export const POST = async (req: Request) => {
       });
     }
 
-    // const connection = new Connection(clusterApiUrl('mainnet-beta'),{
-    //   commitment: "confirmed",
-    // });
-    const connection = new Connection(clusterApiUrl('devnet'), {
+    const connection = new Connection(clusterApiUrl('mainnet-beta'),{
       commitment: "confirmed",
     });
+    // const connection = new Connection(clusterApiUrl('devnet'), {
+    //   commitment: "confirmed",
+    // });
     const program = new anchor.Program<Escrow>(EscrowJson as Escrow, { connection });
 
     const claimerAtaZeus = await getAssociatedTokenAddress(
