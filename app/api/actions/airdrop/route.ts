@@ -46,6 +46,7 @@ export const GET = async (req: Request) => {
             {
               name: "password",
               label: "Password",
+              required: true,
             },
           ],
         }
@@ -77,13 +78,18 @@ export const POST = async (req: Request) => {
       });
     }
 
-    const connection = new Connection(clusterApiUrl('mainnet-beta'),{
-      commitment: "confirmed",
-    });
+    const providerUrl = process.env.SOLANA_RPC;
+    if (!providerUrl) {
+      return new Response('Environment variable "SOLANA_RPC" not set', {
+        status: 400,
+        headers: ACTIONS_CORS_HEADERS, //Must include CORS HEADERS
+      });
+    }
+    const connection = new Connection(providerUrl);
     // const connection = new Connection(clusterApiUrl('devnet'), {
     //   commitment: "confirmed",
     // });
-    const program = new anchor.Program<Escrow>(EscrowJson as Escrow, { connection });
+    const program = new anchor.Program<Escrow>(EscrowJson as Escrow, {connection});
 
     const claimerAtaZeus = await getAssociatedTokenAddress(
       zeusTokenMint,
@@ -92,6 +98,12 @@ export const POST = async (req: Request) => {
     // Determined Escrow and Vault addresses
     const params = new URL(req.url).searchParams;
     const password = params.get("password");
+    if (!password) {
+      return new Response('Invalid "password" provided', {
+        status: 400,
+        headers: ACTIONS_CORS_HEADERS, //Must include CORS HEADERS
+      });
+    }
     const seed = new anchor.BN(password);
     const escrow = PublicKey.findProgramAddressSync(
       [Buffer.from("state"), seed.toArrayLike(Buffer, "le", 8)],
